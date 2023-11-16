@@ -23,7 +23,7 @@ const intializeranddbsever = async () => {
 
 intializeranddbsever();
 
-app.get("/movies/", async (request, resolve) => {
+app.get("/movies/", async (request, response) => {
   const allmoviesquery = `SELECT * FROM  movie ORDER BY movie_id;`;
   const movies = await db.all(allmoviesquery);
   const ans = (movies) => {
@@ -36,3 +36,27 @@ app.get("/movies/", async (request, resolve) => {
   };
   response.send(movies.map((eachmovie) => ans(eachmovie)));
 });
+
+app.post("/movies/", async (request, response) => {
+  const moviedetails = request.body;
+  const { directorId, movieName, leadActor } = moviedetails;
+  const addmoviequery = `
+INSERT INTO movie
+(director_id, movie_name, lead_actor)
+VALUES(${directorId},
+    ${movieName},
+    ${leadActor});`;
+  const dbresponse = await db.run(addmoviequery);
+  const movieId = dbresponse.lastID;
+  response.send({ movie_id: movieId });
+});
+
+app.get("/movies/:movieId/", async (request, response) => {
+  const { specificmovie } = request.params;
+  const getperticularmovie = `
+    SELECT * FROM movie
+    WHERE movie_id =${specificmovie};`;
+  const movie = await db.get(getperticularmovie);
+  response.send(movie);
+});
+module.exports = app;
