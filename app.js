@@ -28,10 +28,7 @@ app.get("/movies/", async (request, response) => {
   const movies = await db.all(allmoviesquery);
   const ans = (movies) => {
     return {
-      movieId: movies.movie_id,
-      directorId: movies.director_id,
       movieName: movies.movie_name,
-      leadActor: movies.lead_actor,
     };
   };
   response.send(movies.map((eachmovie) => ans(eachmovie)));
@@ -58,5 +55,58 @@ app.get("/movies/:movieId/", async (request, response) => {
     WHERE movie_id =${specificmovie};`;
   const movie = await db.get(getperticularmovie);
   response.send(movie);
+});
+
+app.put("/movies/:movieId/", async (request, response) => {
+  const { movieId } = request.params;
+  const moviedetails = request.body;
+  const { directorId, movieName, leadActor } = moviedetails;
+  const updatemoviequery = `
+    UPDATE movie
+    SET director_id = ${directorId},
+    movie_name=${movieName},
+    lead_actor = ${leadActor}
+    WHERE 
+    movie_id = ${movieId};`;
+  await db.run(updatemoviequery);
+  response.send("Movie Details Updated");
+});
+
+app.delete("/movies/:movieId/", async (request, response) => {
+  const { movieId } = request.params;
+  const deletemoviequery = `
+    DELETE FROM movie
+    WHERE movie_id = ${movieID};`;
+  await db.run(deletemoviequery);
+  response.send("Movie Removed");
+});
+
+app.get("/directors/", async (request, response) => {
+  const directorsquery = `
+    SELECT * FROM directors
+    ORDER BY director_id;`;
+  const director = await db.all(directorsquery);
+  const answer = (director) => {
+    return {
+      directorId: director.director_id,
+      directorName: director.director_name,
+    };
+  };
+  response.send(director.map((eachdirector) => answer(eachdirector)));
+});
+
+app.get("/directors/:directorId/movies/", async (request, response) => {
+  const { directorId } = request.body;
+  const fewmoviesquery = `
+    SELECT * FROM  movies
+    NATURAL JOIN directors
+    WHERE director_id = ${directorId};`;
+  const themovies = await db.all(fewmoviesquery);
+  const fullans = (themovies) => {
+    return {
+      movieName: themovies.movie_name,
+    };
+  };
+  response.send(themovies.map((allmovies) => fullans(allmovies)));
 });
 module.exports = app;
